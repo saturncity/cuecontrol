@@ -17,12 +17,13 @@ A prompt book for stage managers. Load a script in Fountain, follow it live on a
 panel of tiles, and mark the words your cues are called on.
 
 > [!WARNING]
-> I built this over a weekend at HackLondon 2025 and then abandoned it. Until
-> September 2026 it didn't run at all: it fetched the script from a server I
-> never wrote, so every load ended in the error handler. I've fixed that much, so
-> you can see what it does, but the cue prompting shows the wrong line and saving
-> would corrupt your script. Read [Known issues](#-known-issues) before you point
-> it at anything you care about.
+> I built this over a weekend at HackLondon 2025 and then abandoned it. It loaded
+> its script over HTTP from a companion API server we wrote the same weekend,
+> which never made it into this repo and is now lost, so on its own this half
+> couldn't start: every load ended in the error handler. I swapped that fetch for
+> a file picker in September 2026, so you can see what it does, but the cue
+> prompting shows the wrong line and saving would corrupt your script. Read
+> [Known issues](#-known-issues) before you point it at anything you care about.
 
 <div align="center">
 
@@ -68,7 +69,8 @@ to connect the two doesn't work.
 ![Start screen](docs/assets/01-start-screen.png)
 
 The start screen I added in 2026. Before this, the app called `fetch` against
-`localhost:3000` and you got a red error string instead of anything else.
+`localhost:3000`, and with the API server gone you got a red error string instead
+of anything else.
 
 ![Tile menu](docs/assets/02-tile-menu.png)
 
@@ -168,8 +170,8 @@ whatever line was current at the time. This is the feature the project is named
 for.
 
 **Saving would corrupt your script.** Turning record mode off posts the script
-back to the server that doesn't exist, so nothing is written today. The bug is
-what it would write if it could: the exporter rebuilds the file from rendered
+back to `localhost:3000`, which nothing is listening on any more, so nothing is
+written today. The bug is what it would write if it could: the exporter rebuilds the file from rendered
 text, which drops the `.` on forced scene headings, the `~` on lyrics, the `@` on
 forced characters, the `> <` on centered text, and the whole title page.
 Round-tripping a marked script through it would quietly flatten the formatting.
