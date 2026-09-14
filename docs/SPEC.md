@@ -442,7 +442,7 @@ Checked against GitHub's repo counts: `stage-management` 23, `show-control` 52,
 and has a single repo under it, so it would have been a dead end.
 
 ```
-gh repo edit --description "A cue-calling prompt book for stage managers that fires lighting and sound cues over MIDI and OSC" --add-topic theatre,stage-management,osc,midi-show-control,qlab
+gh repo edit --description "A cue-calling prompt book for stage managers that fires lighting and sound cues over MIDI and OSC" --add-topic stage-management,show-control,osc,javascript
 ```
 
 ---
