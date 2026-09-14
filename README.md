@@ -20,10 +20,9 @@ panel of tiles, and mark the words your cues are called on.
 > I built this over a weekend at HackLondon 2025 and then abandoned it. Until
 > September 2026 it didn't run at all: it fetched the script from a server I
 > never wrote, so every load ended in the error handler. I've fixed that much, so
-> you can see what it does, but the cue prompting is broken and saving corrupts
-> your script. Read [Known issues](#-known-issues) before you point it at
-> anything you care about. I'm rewriting it rather than patching it, and the
-> design for that is in [docs/SPEC.md](docs/SPEC.md).
+> you can see what it does, but the cue prompting shows the wrong line and saving
+> would corrupt your script. Read [Known issues](#-known-issues) before you point
+> it at anything you care about.
 
 <div align="center">
 
@@ -93,9 +92,8 @@ the time that actually passed.
 - Python 3, which ships with macOS and most Linux distributions, to serve the files. Any static file server does the same job.
 - A script in Fountain format. There's one at `sample.fountain` in this repo if you don't have one to hand.
 
-You don't need npm. There's a `package.json` but it contains `{}` and declares
-nothing, so `npm install` has nothing to install and `npm test` has no script to
-run. It's a leftover from an IntelliJ project template.
+There's no package manager involved. No dependencies, no lockfile, nothing to
+install.
 
 ### Installation
 
@@ -151,19 +149,15 @@ cuecontrol/
 │   ├── fileManager.js    # File picker in, download out
 │   ├── timerDisplay.js   # The clock
 │   ├── promptDisplay.js  # Cue prompts. Broken, see Known issues
-│   ├── cueListDisplay.js # Cue synopsis. Never ran, see Known issues
 │   ├── liveFeed.js       # Webcam tile
 │   └── audioLevelMonitor.js # Microphone level tile
-└── docs/
-    ├── SPEC.md           # The v2 design, agreed and not yet built
-    └── assets/           # Screenshots for this README
+└── docs/assets/          # Screenshots for this README
 ```
 
 ## 🐛 Known issues
 
-I'm not fixing these on this branch. The v2 rewrite in
-[docs/SPEC.md](docs/SPEC.md) addresses all of them, and patching a weekend
-prototype into a tool a stage manager could trust isn't worth the diff.
+I'm not fixing these. This is what a hackathon weekend produced, and I'd rather
+leave an honest record of it than quietly patch the history.
 
 **Cue prompting shows the wrong line.** `promptDisplay` reads
 `window.currentSelectIndex`, which counts selectable lines, and looks it up as
@@ -173,12 +167,12 @@ on. It also renders once when you place it and never updates, so it's frozen on
 whatever line was current at the time. This is the feature the project is named
 for.
 
-**Saving corrupts your script.** Turning record mode off posts the script back to
-the server that doesn't exist, so nothing is written today. The bug is what it
-would write if it could: the exporter rebuilds the file from rendered text, which
-drops the `.` on forced scene headings, the `~` on lyrics, the `@` on forced
-characters, the `> <` on centered text, and the whole title page. Round-tripping
-a marked script through it would quietly flatten the formatting.
+**Saving would corrupt your script.** Turning record mode off posts the script
+back to the server that doesn't exist, so nothing is written today. The bug is
+what it would write if it could: the exporter rebuilds the file from rendered
+text, which drops the `.` on forced scene headings, the `~` on lyrics, the `@` on
+forced characters, the `> <` on centered text, and the whole title page.
+Round-tripping a marked script through it would quietly flatten the formatting.
 
 **The clock runs slow.** It adds exactly 10ms on every `setInterval(fn, 10)`
 tick, and browsers don't fire a 10ms interval on time. I measured 14.5% slow in
@@ -222,21 +216,15 @@ you decide the layout is broken.
 **Script text goes through `innerHTML`.** A script containing `<` or `&` renders
 as markup instead of text.
 
-**The cue list tile has never run.** `cueListDisplay.js` imports
-`./totalTime.js`, which isn't in the repo. Nothing imports the tile, so it sits
-there inert rather than breaking anything.
-
 **Tiles can't be moved or resized** once placed, and the layout isn't saved. Two
 of the tile types differ only in size and both create an element with the same
 `id`, so placing both gives you duplicate IDs.
 
 ## 🤝 Contributing
 
-This branch is an archive, so I'd rather not take patches against it. If you want
-to work on CueControl, the v2 design in [docs/SPEC.md](docs/SPEC.md) is where
-it's going, and issues and disagreements about that are welcome. The prototype as
-it was at HackLondon, before I made it boot, is on the
-[`v1`](https://github.com/saturncity/cuecontrol/tree/v1) branch.
+This is an archive, so I'd rather not take patches against it. The prototype
+exactly as it stood at HackLondon, before I made it boot, is the first commit on
+the [`v1`](https://github.com/saturncity/cuecontrol/tree/v1) branch.
 
 ## 📄 License
 
