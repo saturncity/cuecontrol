@@ -435,10 +435,11 @@ Description, 97 characters:
 
 > A cue-calling prompt book for stage managers that fires lighting and sound cues over MIDI and OSC
 
-Topics: `theatre`, `stage-management`, `osc`, `midi-show-control`, `qlab`
+Topics: `stage-management`, `show-control`, `osc`, `javascript`
 
-Each topic gets checked at `github.com/topics/<name>` before the edit runs.
-`stage-management` and `midi-show-control` are the two likely to be thin.
+Checked against GitHub's repo counts: `stage-management` 23, `show-control` 52,
+`osc` 1130, `javascript` very large. `midi-show-control` was the first proposal
+and has a single repo under it, so it would have been a dead end.
 
 ```
 gh repo edit --description "A cue-calling prompt book for stage managers that fires lighting and sound cues over MIDI and OSC" --add-topic theatre,stage-management,osc,midi-show-control,qlab
