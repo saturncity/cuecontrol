@@ -1,3 +1,4 @@
 .idea/
+.scratch/
 .DS_Store
 npm-debug.log*

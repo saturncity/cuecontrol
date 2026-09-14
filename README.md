@@ -190,9 +190,8 @@ cuecontrol/
 ├── js/                   # The prototype's modules, one per tile plus the parser
 ├── docs/
 │   ├── SPEC.md           # The agreed v2 design. Start here.
-│   ├── agents/           # Per-repo config for the engineering skills
 │   └── assets/           # Screenshots
-└── .scratch/             # Issue tracker. One directory per feature.
+└── LICENSE
 ```
 
 ## 🤝 Contributing
@@ -206,9 +205,6 @@ Worth knowing before you read it: the terminology is deliberate. Standby and go
 mean specific things, GO always comes last in a spoken cue, and point cues like
 `LX 12.5` are ordinary rather than an edge case. The spec follows real practice
 where that conflicts with what would be easier to build.
-
-Tickets live in `.scratch/`, one directory per feature, per
-[docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 
 ## 📄 License
 
