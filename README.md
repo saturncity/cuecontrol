@@ -18,10 +18,10 @@ called on, then call the show and let lighting and sound receive the GO over MID
 Show Control and OSC.
 
 > [!NOTE]
-> The v2 design is agreed and written up in [docs/SPEC.md](docs/SPEC.md). None of
-> it is built yet. The code on this branch is still the 2025 hackathon prototype,
-> unchanged except for the commit that made it boot, so treat anything you run
-> today as the old version. The [Roadmap](#-roadmap) is the honest picture.
+> The v2 design is agreed. None of it is built yet. The code on this branch is
+> still the 2025 hackathon prototype, unchanged except for the commit that made
+> it boot, so treat anything you run today as the old version. [Design](#-design)
+> covers where it's going and the [Roadmap](#-roadmap) is the honest picture.
 
 <div align="center">
 
@@ -55,15 +55,18 @@ one key is GO.
 
 | Piece | State |
 |---|---|
-| v2 design | Agreed, in [docs/SPEC.md](docs/SPEC.md) |
+| v2 design | Agreed, see [Design](#-design) |
 | v2 code | Not started |
 | Test seam | Decided: one pure show core, driven with `node --test` |
 | Prototype | Runs, with [known defects](https://github.com/saturncity/cuecontrol/tree/v1#-known-issues) |
 
 I built the prototype over a weekend at HackLondon 2025 and abandoned it. It
-didn't run at all until September 2026: it fetched the script from a server I
-never wrote, so every load ended in the error handler. I've fixed that much, and
-the version that exists today is archived on the
+loaded its script over HTTP from a companion API server, which we did write that
+weekend: the client expects `GET` and `POST` on `/fountain` at `localhost:3000`,
+exchanging JSON of the form `{ content }`. That server never made it into this
+repo and the copy is gone, so from the moment this was the only surviving half,
+every load ended in the error handler. I swapped the fetch for a file picker in
+September 2026, and the version that runs today is archived on the
 [`v1`](https://github.com/saturncity/cuecontrol/tree/v1) branch.
 
 I'm rebuilding rather than patching. Reading the prototype back turned up
@@ -75,8 +78,7 @@ which is the number a stage manager writes on the show report.
 
 ## 🧭 Design
 
-The whole design is in [docs/SPEC.md](docs/SPEC.md). The decisions that shape
-everything else:
+The decisions that shape everything else:
 
 **One pure show core.** A single module owns the script tokens, the cue index,
 the calling position and the clock, constructed with injected clock and send
@@ -188,17 +190,15 @@ cuecontrol/
 ├── sample.fountain       # A short scene to load
 ├── css/                  # Grid, tile chrome and Fountain element styles
 ├── js/                   # The prototype's modules, one per tile plus the parser
-├── docs/
-│   ├── SPEC.md           # The agreed v2 design. Start here.
-│   └── assets/           # Screenshots
+├── docs/assets/          # Screenshots
 └── LICENSE
 ```
 
 ## 🤝 Contributing
 
 The design is settled but not sacred, and it's easier to change now than after
-it's built. If something in [docs/SPEC.md](docs/SPEC.md) is wrong, open an issue
-and say so. I'd rather hear it from someone who has called a show than argue it
+it's built. If something in [Design](#-design) is wrong, open an issue and say
+so. I'd rather hear it from someone who has called a show than argue it
 from first principles.
 
 Worth knowing before you read it: the terminology is deliberate. Standby and go
