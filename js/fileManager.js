@@ -1,24 +1,28 @@
 // js/fileManager.js
 
 /**
- * Retrieves the Fountain file from the server via REST API.
- * Expects the server to return a JSON object with a "content" property.
+ * Waits for the reader to choose a Fountain file, then hands back its text.
+ * Resolves to { content: "..." }, the shape script.js already expects.
  */
-export async function getFountainFile() {
-    try {
-        console.log("FileManager: Initiating GET request to /fountain...");
-        const response = await fetch("http://localhost:3000/fountain");
-        console.log("FileManager: GET response received:", response);
-        if (!response.ok) {
-            throw new Error(`Failed to fetch fountain file: ${response.status} ${response.statusText}`);
-        }
-        const data = await response.json();
-        console.log("FileManager: Parsed JSON data:", data);
-        return data; // Expected format: { content: "..." }
-    } catch (error) {
-        console.error("FileManager: Error in getFountainFile:", error);
-        throw error;
-    }
+export function getFountainFile() {
+    return new Promise((resolve, reject) => {
+        const input = document.getElementById("file-input");
+        const loader = document.getElementById("loader");
+        input.addEventListener("change", async () => {
+            const file = input.files[0];
+            if (!file) {
+                reject(new Error("No file chosen."));
+                return;
+            }
+            try {
+                const content = await file.text();
+                loader.remove();
+                resolve({ content });
+            } catch (err) {
+                reject(new Error("Could not read " + file.name + ": " + err.message));
+            }
+        }, { once: true });
+    });
 }
 
 /**

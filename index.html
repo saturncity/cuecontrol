@@ -9,10 +9,15 @@
     <link rel="stylesheet" href="css/grid.css" />
     <link rel="stylesheet" href="css/modules.css" />
     <link rel="stylesheet" href="css/tooltip.css" />
-    <script src="https://apis.google.com/js/api.js"></script>
-
 </head>
 <body>
+<!-- Start screen: the app needs a script before the grid means anything -->
+<div id="loader" class="loader">
+    <h1>CueControl</h1>
+    <p>Choose a Fountain script to load.</p>
+    <input type="file" id="file-input" accept=".fountain,.txt,.spmd" />
+    <p class="hint">No script to hand? Load <code>sample.fountain</code> from this repo.</p>
+</div>
 <!-- Grid wrapper: background grid and module overlay -->
 <div id="grid-wrapper" class="grid-wrapper">
     <div id="grid-container" class="grid-container"></div>

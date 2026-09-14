@@ -45,3 +45,33 @@ body {
     font-size: 18px;
     pointer-events: none;
 }
+
+/* Start screen shown until a script is chosen */
+.loader {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background-color: black;
+    z-index: 2000;
+    padding: 24px;
+    text-align: center;
+}
+
+.loader h1 {
+    font-size: 28px;
+    font-weight: normal;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+.loader .hint {
+    color: #777;
+}
+
+.loader code {
+    color: #aaa;
+}
