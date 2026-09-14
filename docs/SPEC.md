@@ -378,7 +378,7 @@ Carried from a full read of the prototype. Fix column means fix before release.
 | # | Defect | Location | Action |
 |---|---|---|---|
 | 1 | App is dead on load. Fetches `localhost:3000/fountain`, no server exists, body is replaced with a red error every time | `script.js:7`, `fileManager.js:10` | Fix. Blocker. |
-| 2 | Imports `./totalTime.js`, which does not exist | `cueListDisplay.js:2` | Fix or delete, see 14 |
+| 2 | Imported `./totalTime.js`, which does not exist, and nothing imported the module | `cueListDisplay.js:2` | Deleted from both branches |
 | 3 | `promptDisplay` treats `window.currentSelectIndex` (a pointer into `selectableIndices`) as a `data-index`, reading the wrong paragraph. Also renders once and never updates | `promptDisplay.js:43` | Fix. Rebuild. |
 | 4 | Export drops Fountain syntax markers, corrupting the script | `scriptFollow.js:286` | Fix. Section 9. |
 | 5 | Camera stream never stopped on delete. Webcam light stays on until the tab closes | `liveFeed.js:11` | Fix |
@@ -401,13 +401,17 @@ Carried from a full read of the prototype. Fix column means fix before release.
 
 ## 14. Open item
 
-**CueListDisplay.** It's dead code that imports a file which doesn't exist, so it
-has never run. But a cue synopsis is a real theatre document, and it's different
-from the CueLog: a synopsis lists cues that are *planned*, a log records cues that
-*fired*.
+**Does v2 want a cue synopsis tile?** The prototype's `cueListDisplay.js` has
+been deleted: it imported a file that never existed and nothing imported the
+module, so it could only ever have thrown. That settles the dead code, not the
+question behind it.
 
-Recommendation: keep it as the cue synopsis tile, sharing the department parser
-with the send path, sorted numerically. Confirm or cut.
+A cue synopsis is a real theatre document and it is not the same thing as the
+CueLog: a synopsis lists cues that are *planned*, a log records cues that
+*fired*. Building one means sharing the department parser with the send path and
+ordering numerically so point cues sort correctly.
+
+Recommendation: build it, after the send path works. Confirm or cut.
 
 ---
 

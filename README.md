@@ -13,100 +13,142 @@
  ╚═════╝  ╚═════╝  ╚═╝  ╚═══╝    ╚═╝    ╚═╝  ╚═╝  ╚═════╝  ╚══════╝
 ```
 
-A prompt book for stage managers. Load a script in Fountain, follow it live on a
-panel of tiles, and mark the words your cues are called on.
+A cue-calling prompt book for stage managers. Mark cues on the words they're
+called on, then call the show and let lighting and sound receive the GO over MIDI
+Show Control and OSC.
 
-> [!WARNING]
-> I built this over a weekend at HackLondon 2025 and then abandoned it. Until
-> September 2026 it didn't run at all: it fetched the script from a server I
-> never wrote, so every load ended in the error handler. I've fixed that much, so
-> you can see what it does, but the cue prompting shows the wrong line and saving
-> would corrupt your script. Read [Known issues](#-known-issues) before you point
-> it at anything you care about.
+> [!NOTE]
+> The v2 design is agreed and written up in [docs/SPEC.md](docs/SPEC.md). None of
+> it is built yet. The code on this branch is still the 2025 hackathon prototype,
+> unchanged except for the commit that made it boot, so treat anything you run
+> today as the old version. The [Roadmap](#-roadmap) is the honest picture.
 
 <div align="center">
 
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)
 ![CSS](https://img.shields.io/badge/CSS-1572B6?style=for-the-badge&logo=css&logoColor=white)
+![License](https://img.shields.io/github/license/saturncity/cuecontrol?style=for-the-badge)
+![Last commit](https://img.shields.io/github/last-commit/saturncity/cuecontrol?style=for-the-badge)
 
 </div>
 
-## 🎭 About
+## 🎭 What it is
 
 A stage manager calls a show from a prompt book: a copy of the script marked with
 every cue, showing which word each one lands on. They read ahead, give each
-department a standby, then call the go on the beat. I wanted that book on a
-screen, with the cues able to leave the machine and reach a lighting desk.
+department a standby, then call the go on the beat.
 
-What exists is the reading half. You load a Fountain script, drop tiles onto a
-4x3 grid, and follow the script line by line with the spacebar while a clock
-runs. The sending half never got written, and the cue prompting that was supposed
-to connect the two doesn't work.
+Doing that on paper costs three jobs at once. You read the book, you speak the
+cue over headset, and you keep a stopwatch running so you can write act running
+times on the show report. Existing software splits the problem badly: playback
+software owns the cues but has no idea where they sit in the script, and script
+software owns the script but can't fire anything. The stage manager ends up as
+the integration layer, retyping cue numbers into a second system.
 
-- Parses Fountain into scene headings, characters, dialogue, parentheticals, lyrics, transitions and centered text
-- Follows the script line by line, keeping the current line centered in its tile
-- Places cue marks on a line and stores them as JSON inside Fountain boneyard comments, so the marks travel inside the script file
-- Records how long you spend on each line, so a rehearsal can time itself
-- Lays tiles out on a grid you build by right-clicking a cell
-- Shows a webcam feed and a microphone level meter as tiles
-- Runs with no dependencies, no build step and no framework
+CueControl is both halves. Load a script in Fountain, click the word a cue is
+called on, label it the way you'd write it in a real book. The mark lives inside
+the script file, so the book and the script are one document. During the show,
+one key is GO.
+
+## 📍 Where it is
+
+| Piece | State |
+|---|---|
+| v2 design | Agreed, in [docs/SPEC.md](docs/SPEC.md) |
+| v2 code | Not started |
+| Test seam | Decided: one pure show core, driven with `node --test` |
+| Prototype | Runs, with [known defects](https://github.com/saturncity/cuecontrol/tree/v1#-known-issues) |
+
+I built the prototype over a weekend at HackLondon 2025 and abandoned it. It
+didn't run at all until September 2026: it fetched the script from a server I
+never wrote, so every load ended in the error handler. I've fixed that much, and
+the version that exists today is archived on the
+[`v1`](https://github.com/saturncity/cuecontrol/tree/v1) branch.
+
+I'm rebuilding rather than patching. Reading the prototype back turned up
+nineteen defects, and the three that matter most are structural: the cue prompt
+tile reads the wrong line, exporting a marked script drops every Fountain syntax
+marker, and the clock runs 14.5% slow because it adds a fixed 10ms per
+`setInterval(10)` tick. That last one loses about 17 minutes over a two-hour act,
+which is the number a stage manager writes on the show report.
+
+## 🧭 Design
+
+The whole design is in [docs/SPEC.md](docs/SPEC.md). The decisions that shape
+everything else:
+
+**One pure show core.** A single module owns the script tokens, the cue index,
+the calling position and the clock, constructed with injected clock and send
+ports. Every panel is a renderer over it. The prototype broke that three ways:
+panels owned domain state, panels read each other's DOM, and shared state sat on
+the global object.
+
+**The project is one Fountain file.** Cues, layout, department config and
+recorded timings live inside it as boneyard comments, which the Fountain spec
+says every other tool ignores. Per-line data sits next to the line it annotates
+so it survives a cut made in any editor. Show-level config goes in one header
+block.
+
+**Cues attach to words, not characters.** A word index survives reflow, resize
+and indentation. The prototype stored a character offset measured with
+`measureText`, which broke on every indented and every wrapped line.
+
+**Both transports, one download.** A dependency-free Node file serves the app
+from `localhost` and relays OSC over UDP. Serving from that origin also makes
+`localhost` a secure context, so Web MIDI works, with no mixed content and no
+private network preflight. Open it from anywhere else and you get the book with
+OSC disabled and a reason.
+
+**Red is standby, green is go, amber is warning.** Cue lights are physical
+fixtures and those meanings are established for anyone who has worked backstage.
+Record mode therefore can't use red and becomes a text label.
 
 ## 🛠 Tech stack
 
-| Layer | Technology | Why it's here |
+| Layer | Technology | Status |
 |---|---|---|
-| Markup | HTML5 | One page. The grid and the tooltip are the only fixed elements. |
-| Styling | CSS custom properties | `--grid-columns` and `--grid-rows` are read from CSS by JavaScript, so the grid size lives in one place. |
-| Logic | JavaScript, ES modules | Native `import` with no bundler. It's why the app needs a server rather than opening from disk. |
-| Script format | Fountain | Plain text screenplay markup. Annotations hide in boneyard comments, so a marked script stays a valid script. |
-| Camera and mic | MediaDevices, Web Audio, Canvas | The live feed and the level meter, both straight off the platform APIs. |
-| Typeface | JetBrains Mono | Loaded from Google Fonts. Cue positions are measured by character width, which assumes a monospaced face. |
+| App | JavaScript, ES modules, no bundler | In use |
+| Markup and styling | HTML5, CSS custom properties | In use |
+| Script format | Fountain, with annotations in boneyard comments | In use |
+| Camera | MediaDevices, for the stage view tile | In use |
+| Bridge | Node 18 or later, `node:http` and `node:dgram`, no dependencies | Specified, not written |
+| Cue transport | Web MIDI sending MSC, and OSC over the bridge | Specified, not written |
+| Tests | `node --test` against the show core | Specified, not written |
 
 ## 📷 Screenshots
 
-![Start screen](docs/assets/01-start-screen.png)
-
-The start screen I added in 2026. Before this, the app called `fetch` against
-`localhost:3000` and you got a red error string instead of anything else.
+These are the prototype, not the rewrite.
 
 ![Tile menu](docs/assets/02-tile-menu.png)
 
-Right-clicking a grid cell opens the tile menu. Each tile type disappears from
-the menu once one is placed, so you get one of each. Note that the grid cells
-have no visible borders, which is a bug rather than a look: the border color is
-set to black on a black background.
+Right-clicking a grid cell opens the tile menu. Each type disappears once one is
+placed, so you get one of each. The cells have no visible borders because the
+border color is set to black on a black background, which v2 fixes along with the
+rest of the palette.
 
 ![Script follow with the clock running](docs/assets/03-script-follow.png)
 
-A 2x3 Script Follow tile with a Timer Display beside it. The highlighted line is
-the current one, and every press of space moves it down and scrolls the script to
-keep it centered. The clock reads 00:00:03:650 here, which is already less than
-the time that actually passed.
+A Script Follow tile with a Timer Display beside it. The highlighted line is the
+current one, and space moves it down while the script scrolls to keep it
+centered. The clock reads 00:00:03:650, already behind the time that actually
+passed.
 
-## 🚀 Getting started
+## 🚀 Running what's here today
+
+This runs the prototype. There's nothing of v2 to run yet.
 
 ### Prerequisites
 
 - A browser with ES module support. Any current Chrome, Firefox, Safari or Edge.
 - Python 3, which ships with macOS and most Linux distributions, to serve the files. Any static file server does the same job.
-- A script in Fountain format. There's one at `sample.fountain` in this repo if you don't have one to hand.
+- A script in Fountain format. There's one at `sample.fountain` if you don't have one to hand.
 
-There's no package manager involved. No dependencies, no lockfile, nothing to
-install.
-
-### Installation
-
-There's no install step. Clone it and serve it.
+No package manager is involved. No dependencies, no lockfile, nothing to install.
 
 ```bash
 git clone https://github.com/saturncity/cuecontrol.git
 cd cuecontrol
-```
-
-### Running
-
-```bash
 python3 -m http.server 8080
 ```
 
@@ -117,114 +159,56 @@ Serve it over HTTP rather than opening `index.html` from disk. Browsers refuse t
 load ES modules over `file://`, so a double-click gives you a blank page and a
 CORS error in the console.
 
-### Using it
+## 🗺 Roadmap
 
-| Key | What it does |
-|---|---|
-| <kbd>Space</kbd> | Advance one line. Also starts the clock, the first time you press it after placing a Timer tile. |
-| <kbd>↑</kbd> <kbd>↓</kbd> | Move up and down the script without advancing the press count |
-| <kbd>P</kbd> | Pause and resume the clock |
-| <kbd>R</kbd> | Reset everything back to the top |
-| <kbd>U</kbd> | Toggle record mode, which times how long you hold each line |
-| Right-click | Open the tile menu on a cell, or the delete menu on a tile |
+Ordered roughly the way I'd build it. The round-trip test comes first because
+it's the one that stops the tool eating someone's prompt book.
 
-Click a word on the highlighted line to drop a cue on it and give it a label.
+- [x] Agree the v2 design and write it up
+- [x] Pick the test seam
+- [ ] Show core, with injected clock and send ports
+- [ ] Fountain parse and serialize that round-trips without dropping syntax
+- [ ] Word-level cue placement
+- [ ] Department table and cue label parsing, point cues included
+- [ ] Warning, standby and go, with configurable lookahead
+- [ ] Act running times from monotonic timestamps
+- [ ] Auto-save, plus export and import
+- [ ] Project launcher with recent shows
+- [ ] Web MIDI sending MSC
+- [ ] The OSC bridge, serving the app and relaying UDP
+- [ ] Connection indicators and the cue log
+- [ ] Dark console palette, self-hosted font
 
 ## 📁 Project structure
 
 ```
 cuecontrol/
-├── index.html            # The whole page: grid wrapper, module layer, tooltip
-├── script.js             # Entry point. Loads a script, then hands off to grid.js
-├── sample.fountain       # A short scene to load if you don't have a script
-├── css/
-│   ├── grid.css          # Grid dimensions as custom properties, plus the start screen
-│   ├── modules.css       # Tile chrome and the Fountain element styles
-│   └── tooltip.css       # The right-click menu
-├── js/
-│   ├── grid.js           # Builds the grid, places and deletes tiles
-│   ├── fountainParser.js # Fountain text into typed tokens
-│   ├── scriptFollow.js   # The book: rendering, selection, cue placement, keys
-│   ├── annotationManager.js # Reads and writes the hidden boneyard JSON per line
-│   ├── fileManager.js    # File picker in, download out
-│   ├── timerDisplay.js   # The clock
-│   ├── promptDisplay.js  # Cue prompts. Broken, see Known issues
-│   ├── liveFeed.js       # Webcam tile
-│   └── audioLevelMonitor.js # Microphone level tile
-└── docs/assets/          # Screenshots for this README
+├── index.html            # The prototype's single page
+├── script.js             # Entry point. Loads a script, hands off to grid.js
+├── sample.fountain       # A short scene to load
+├── css/                  # Grid, tile chrome and Fountain element styles
+├── js/                   # The prototype's modules, one per tile plus the parser
+├── docs/
+│   ├── SPEC.md           # The agreed v2 design. Start here.
+│   ├── agents/           # Per-repo config for the engineering skills
+│   └── assets/           # Screenshots
+└── .scratch/             # Issue tracker. One directory per feature.
 ```
-
-## 🐛 Known issues
-
-I'm not fixing these. This is what a hackathon weekend produced, and I'd rather
-leave an honest record of it than quietly patch the history.
-
-**Cue prompting shows the wrong line.** `promptDisplay` reads
-`window.currentSelectIndex`, which counts selectable lines, and looks it up as
-though it counted every line in the script. Those numbers diverge as soon as
-there's a scene heading or a character name, so the tile shows a line you aren't
-on. It also renders once when you place it and never updates, so it's frozen on
-whatever line was current at the time. This is the feature the project is named
-for.
-
-**Saving would corrupt your script.** Turning record mode off posts the script
-back to the server that doesn't exist, so nothing is written today. The bug is
-what it would write if it could: the exporter rebuilds the file from rendered
-text, which drops the `.` on forced scene headings, the `~` on lyrics, the `@` on
-forced characters, the `> <` on centered text, and the whole title page.
-Round-tripping a marked script through it would quietly flatten the formatting.
-
-**The clock runs slow.** It adds exactly 10ms on every `setInterval(fn, 10)`
-tick, and browsers don't fire a 10ms interval on time. I measured 14.5% slow in
-headless Firefox, which is about 17 minutes lost over a two-hour act. The
-mechanism guarantees it runs slow on any browser, though the size of the gap
-moves with the machine.
-
-**Cue marks land on the wrong character.** Cue positions are worked out by
-measuring one character's width and dividing the click offset by it. That ignores
-the left margin on dialogue and parentheticals, and it ignores wrapping entirely,
-so on any line that runs to a second row the mark lands somewhere else. Resizing
-a tile moves every mark, because the stored offset was measured against the old
-width.
-
-**Forced scene headings only work once.** The parser latches a flag after the
-first scene heading, and after that a `.SCENE NAME` line falls through to the
-all-caps test and becomes a character name. My own `sample.fountain` has this
-problem: the second act heading renders as a character.
-
-**Keys collide and stack.** `R` is bound in both `scriptFollow.js` and
-`timerDisplay.js`, and which one wins depends on the order you placed the tiles.
-Each Script Follow tile you add registers another window listener, so with two of
-them every press fires twice. Nothing checks whether you're typing in a field.
-`R` also wipes the clock with no confirmation.
-
-**The clock starts late.** `timerDisplay` registers its space handler when you
-place the tile, so the clock starts on the first press after that. Add the timer
-once you've started following the script and it starts from zero without saying
-so.
-
-**Tiles leak when you delete them.** The webcam tile never stops its stream, so
-the camera light stays on until you close the tab. The audio tile keeps its
-`requestAnimationFrame` loop running forever against a canvas that's no longer on
-the page, and never closes its `AudioContext`. Deleted timer tiles stay in the
-array the clock updates.
-
-**The grid is invisible.** Cell borders are `1px solid black` on a black
-background, so you see a field of `+` signs and no cells. Worth knowing before
-you decide the layout is broken.
-
-**Script text goes through `innerHTML`.** A script containing `<` or `&` renders
-as markup instead of text.
-
-**Tiles can't be moved or resized** once placed, and the layout isn't saved. Two
-of the tile types differ only in size and both create an element with the same
-`id`, so placing both gives you duplicate IDs.
 
 ## 🤝 Contributing
 
-This is an archive, so I'd rather not take patches against it. The prototype
-exactly as it stood at HackLondon, before I made it boot, is the first commit on
-the [`v1`](https://github.com/saturncity/cuecontrol/tree/v1) branch.
+The design is settled but not sacred, and it's easier to change now than after
+it's built. If something in [docs/SPEC.md](docs/SPEC.md) is wrong, open an issue
+and say so. I'd rather hear it from someone who has called a show than argue it
+from first principles.
+
+Worth knowing before you read it: the terminology is deliberate. Standby and go
+mean specific things, GO always comes last in a spoken cue, and point cues like
+`LX 12.5` are ordinary rather than an edge case. The spec follows real practice
+where that conflicts with what would be easier to build.
+
+Tickets live in `.scratch/`, one directory per feature, per
+[docs/agents/issue-tracker.md](docs/agents/issue-tracker.md).
 
 ## 📄 License
 
